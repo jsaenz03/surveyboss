@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Eligibility Checker</title>
+<title>Eligibility Checker v2.1</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <style>
   * {
     box-sizing: border-box;
@@ -469,6 +472,9 @@
 <form id="eligibilityForm">
   <img src="/logo/logo.png" alt="Company Logo" class="logo">
   <h2>Check Eligibility</h2>
+  <div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem; text-align: center;">
+    Version 2.1 - Enhanced Debug Mode - Updated: <span id="buildTime"></span>
+  </div>
 
   <label>Age:
     <input type="number" name="age" placeholder="Enter your age" required/>
@@ -662,28 +668,79 @@ document.getElementById("eligibilityForm").addEventListener("submit", async (e) 
 
   console.log("Sending form data:", formData);
 
+  // Enhanced headers with multiple potential formats the API might expect
+  const requestHeaders = {
+    "Content-Type": "application/json",
+    "eligibleservices": "true",
+    "eligible-services": "true",  // kebab-case variant
+    "x-eligible-services": "true", // x-header variant
+    "Authorization": "Bearer eligible", // potential auth header
+    "Cache-Control": "no-cache", // prevent caching issues
+    "User-Agent": "SurveyBoss-Eligibility/1.0"
+  };
+
+  console.log("Request headers being sent:", requestHeaders);
+  console.log("Webhook URL:", config.eligibilityWebhook);
+  console.log("Cache-busting timestamp:", Date.now());
+
   try {
     const response = await fetch(config.eligibilityWebhook, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "eligibleservices": "true"
-      },
+      headers: requestHeaders,
       body: JSON.stringify(formData)
     });
 
     console.log("Response status:", response.status);
     console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
+    // Log the complete request details that were sent
+    console.log("Complete request details:", {
+      url: config.eligibilityWebhook,
+      method: "POST",
+      headers: requestHeaders,
+      bodySize: JSON.stringify(formData).length,
+      timestamp: new Date().toISOString()
+    });
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Response error:", response.status, response.statusText, errorText);
+
+      // Enhanced error logging for header debugging
+      console.error("=== DETAILED ERROR DEBUGGING ===");
+      console.error("Request URL:", config.eligibilityWebhook);
+      console.error("Request Headers Sent:", requestHeaders);
+      console.error("Request Body Length:", JSON.stringify(formData).length);
+      console.error("Response Status:", response.status);
+      console.error("Response Status Text:", response.statusText);
+      console.error("Response Headers Received:", Object.fromEntries(response.headers.entries()));
+      console.error("Response Body:", errorText);
+      console.error("Browser Info:", {
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        pageURL: window.location.href
+      });
+      console.error("================================");
+
+      // Try to parse error response for better debugging
+      let errorDetails = errorText;
+      try {
+        const errorObj = JSON.parse(errorText);
+        errorDetails = errorObj;
+        console.error("Parsed error object:", errorObj);
+      } catch (parseError) {
+        console.error("Could not parse error response as JSON");
+      }
+
       throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ' - ' + errorText : ''}`);
     }
 
     let data = await response.json();
 
     console.log("Raw webhook response:", data);
+
+    // Enhanced data parsing to handle various response formats
+    let payload;
 
     // Check if data is a JSON string that needs parsing
     if (typeof data === 'string') {
@@ -696,8 +753,25 @@ document.getElementById("eligibilityForm").addEventListener("submit", async (e) 
       }
     }
 
-    // Handle response - data is the array, get first element
-    const payload = Array.isArray(data) && data.length > 0 ? data[0] : data;
+    // Handle array responses - get the first element
+    if (Array.isArray(data) && data.length > 0) {
+      payload = data[0];
+      console.log("Extracted payload from array:", payload);
+    } else {
+      payload = data;
+      console.log("Using data directly as payload:", payload);
+    }
+
+    // Additional check: if payload is still a string, try parsing it again
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+        console.log("Double-parsed payload:", payload);
+      } catch (parseError) {
+        console.error("Failed to double-parse payload:", parseError);
+        throw new Error("Malformed nested JSON response");
+      }
+    }
 
     console.log("Processed payload:", payload);
 
@@ -751,6 +825,26 @@ document.getElementById("eligibilityForm").addEventListener("submit", async (e) 
 
 // Load config when page loads
 loadConfig();
+
+// Set build timestamp for version verification
+document.getElementById('buildTime').textContent = new Date().toLocaleString('en-AU', {
+  timeZone: 'Australia/Sydney',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true
+});
+
+// Log version info on page load
+console.log('=== SurveyBoss Eligibility Checker Debug Info ===');
+console.log('Version: 2.1 - Enhanced Debug Mode');
+console.log('Build Time:', document.getElementById('buildTime').textContent);
+console.log('User Agent:', navigator.userAgent);
+console.log('Page URL:', window.location.href);
+console.log('Cache-busting active: true');
+console.log('===============================================');
 </script>
 
 </body>
