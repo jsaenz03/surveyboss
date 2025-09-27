@@ -1,0 +1,39 @@
+functionsDirectory = "/Users/jsaenz/Downloads/surveyboss/functions"
+functionsDirectoryOrigin = "config"
+plugins = []
+headers = []
+
+[build]
+publish = "/Users/jsaenz/Downloads/surveyboss"
+publishOrigin = "config"
+functions = "/Users/jsaenz/Downloads/surveyboss/functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
+
+[[redirects]]
+from = "/api/config"
+to = "/.netlify/functions/config"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
