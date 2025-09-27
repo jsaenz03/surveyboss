@@ -671,7 +671,8 @@ document.getElementById("eligibilityForm").addEventListener("submit", async (e) 
   // Minimal headers - only what's absolutely required
   // Added timestamp to ensure no caching issues
   const requestHeaders = {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "eligibleservices": "true"
   };
 
   console.log("=== HEADER DEBUG INFO ===");
