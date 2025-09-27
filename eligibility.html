@@ -668,10 +668,9 @@ document.getElementById("eligibilityForm").addEventListener("submit", async (e) 
 
   console.log("Sending form data:", formData);
 
-  // Simplified headers to avoid undefined values
+  // Minimal headers - only what's absolutely required
   const requestHeaders = {
-    "Content-Type": "application/json",
-    "eligibleservices": "true"
+    "Content-Type": "application/json"
   };
 
   console.log("Request headers being sent:", requestHeaders);
